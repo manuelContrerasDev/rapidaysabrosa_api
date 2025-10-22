@@ -1,0 +1,88 @@
+🧪 3️⃣ Prueba en Postman
+
+Método: PUT
+
+URL: http://localhost:4000/api/products/6
+(usa un ID existente)
+
+Body → raw → JSON
+
+{
+  "price": 11500,
+  "description": "Mozzarella, cheddar, azul y parmesano con toque de orégano.",
+  "available": true
+}
+
+
+✅ Resultado
+
+✔️ Actualiza solo los campos enviados
+✔️ Valida que el producto exista antes de modificarlo
+✔️ Compatible con frontend React (fetch/axios PUT)
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+Swagger UI está funcionando ✅
+
+Documentación API profesional, limpia y navegable, con todos los endpoints listados (GET, POST, PUT, DELETE) y sus schemas de respuesta.
+Ya tus clientes podrán ver, probar y entender cómo usar la API sin necesidad de Postman 🎯
+
+
+Resumen:
+
+✅ El createProduct captura errores → responde 500
+✅ Morgan los registra en consola
+✅ El middleware global formatea cualquier error inesperado
+✅ Swagger sigue documentando todo correctamente
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+🧱 Paso 3 — Validación con Zod
+
+npm i zod
+
+
+1️⃣ Instalar dependencias de seguridad
+
+Ejecuta en tu terminal:
+
+npm i helmet express-rate-limit xss-clean
+
+helmet → agrega cabeceras HTTP seguras (CSP, noSniff, etc.).
+express-rate-limit → limita peticiones por IP (evita ataques o spam).
+xss-clean → limpia entrada de texto contra inyección de scripts.
+(Nota: xss-clean es muy liviano y funciona perfecto junto con Zod).
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+🧠 CORS
+
+app.use(cors({
+  origin: ["http://localhost:5173", "https://rapidaysabrosa-ecommerce.vercel.app/"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true,
+}));
+
+
+Eso permite que solo tu frontend local y el deploy en Vercel puedan comunicarse con tu backend.
+💡 Esto evita bloqueos CORS y mantiene seguridad.
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+Arquitectura
+
+Rol	Plataforma	               Función
+Frontend (React)	Vercel	     UI/UX del usuario
+Backend (Express/Prisma)	     Render	API + Lógica de negocio
+Base de datos (PostgreSQL)	   Render	Datos persistentes
+
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+
+rateLimit.js
+
+🧠 Cómo funciona
+Limitador	Uso	Ideal para
+apiLimiter	Se aplica globalmente a todas las rutas /api	Evita flood o ataques DoS
+strictLimiter	Se usa solo en endpoints específicos	Ej: /login, /register, /products (creación)
