@@ -33,17 +33,26 @@ app.use(express.json({ limit: "10kb" }));
 app.use(morgan(NODE_ENV === "production" ? "combined" : "dev"));
 
 // -------------------- 🌐 CORS --------------------
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173").split(",");
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://rapidaysabrosa-ecommerce-tlru.vercel.app", // 👈 tu dominio de producción
+  "https://rapidaysabrosa-api.onrender.com",           // por si el backend se llama a sí mismo
+];
+
 app.use(
   cors({
-    origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("CORS bloqueado: origen no permitido"), false);
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`❌ Bloqueado por CORS: ${origin}`);
+        callback(new Error("CORS no permitido por el servidor"), false);
+      }
     },
     credentials: true,
   })
 );
+
 
 // -------------------- ⏱ Rate Limit --------------------
 const limiter = rateLimit({
