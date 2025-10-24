@@ -6,9 +6,17 @@ import cors from "cors";
 import { xss } from "express-xss-sanitizer";
 import rateLimit from "express-rate-limit";
 import productRoutes from "./routes/products.routes.js";
+import promotionRoutes from "./routes/promotion.routes.js"; 
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/openapi.js";
 import prisma from "./config/db.js";
+import { checkPromotionsExpiration } from "./utils/checkPromotionsExpiration.js";
+
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
@@ -26,14 +34,16 @@ app.use(morgan(NODE_ENV === "production" ? "combined" : "dev"));
 
 // 🌐 CORS dinámico
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173").split(",");
-app.use(cors({
-  origin(origin, callback) {
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error("CORS bloqueado: origen no permitido"), false);
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("CORS bloqueado: origen no permitido"), false);
+    },
+    credentials: true,
+  })
+);
 
 // ⏱️ Rate limit global (anti-flood)
 const limiter = rateLimit({
@@ -46,15 +56,24 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 
 // -------------------- 🔗 Rutas --------------------
+
+// -------------------- 🖼️ Archivos estáticos --------------------
+app.use("/images", express.static(path.join(__dirname, "public/images")));
+
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/products", productRoutes);
+app.use("/api/promotions", promotionRoutes); // 👈 NUEVA RUTA
 
 // 🩺 Healthcheck para monitoreo
 app.get("/health", (_, res) => res.status(200).json({ status: "ok", env: NODE_ENV }));
 app.get("/", (_, res) => {
-  res.send(
-    "🍕 API de Rapida&Sabrosa está en funcionamiento 🚀<br>Endpoints: /api/products – /api/docs"
-  );
+  res.send(`
+    🍕 API de Rapida&Sabrosa está en funcionamiento 🚀<br>
+    Endpoints disponibles:<br>
+    • /api/products<br>
+    • /api/promotions/active<br>
+    • /api/docs
+  `);
 });
 
 // -------------------- ⚠️ Manejo de errores --------------------
@@ -67,9 +86,13 @@ app.use((err, req, res, _next) => {
 });
 
 // -------------------- 🚀 Servidor --------------------
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`🚀 Servidor (${NODE_ENV}) corriendo en puerto ${PORT}`);
+
+  // 🔄 Verificación automática al inicio
+  await checkPromotionsExpiration();
 });
+
 
 // 🧹 Cierre limpio (Render apaga containers después de inactividad)
 const shutdown = async () => {

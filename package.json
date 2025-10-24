@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "postinstall": "npx prisma generate"
+    "postinstall": "npx prisma generate",
+    "seed": "node prisma/seed.js",
+    "seed:images": "node prisma/seedImages.js"
   },
   "dependencies": {
     "@prisma/client": "^6.17.0",
@@ -24,5 +26,8 @@
   "devDependencies": {
     "nodemon": "^3.1.10",
     "prisma": "^6.17.0"
+  },
+  "prisma" : {
+    "seed": "node prisma/seed.js"
   }
 }
