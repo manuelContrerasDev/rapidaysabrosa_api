@@ -6,33 +6,33 @@ import cors from "cors";
 import { xss } from "express-xss-sanitizer";
 import rateLimit from "express-rate-limit";
 import productRoutes from "./routes/products.routes.js";
-import promotionRoutes from "./routes/promotion.routes.js"; 
+import promotionRoutes from "./routes/promotion.routes.js";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/openapi.js";
 import prisma from "./config/db.js";
 import { checkPromotionsExpiration } from "./utils/checkPromotionsExpiration.js";
-
 import path from "path";
 import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
 
-// 🌍 Variables de entorno
+// -------------------- 🧱 Config base --------------------
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// -------------------- 🧱 Seguridad y configuración base --------------------
-app.set("trust proxy", 1); // Render/Vercel usan proxy inverso
+// 🔧 Resolver __dirname en ESModules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// -------------------- 🛡 Seguridad --------------------
+app.set("trust proxy", 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(xss());
 app.use(express.json({ limit: "10kb" }));
 app.use(morgan(NODE_ENV === "production" ? "combined" : "dev"));
 
-// 🌐 CORS dinámico
+// -------------------- 🌐 CORS --------------------
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:5173").split(",");
 app.use(
   cors({
@@ -45,7 +45,7 @@ app.use(
   })
 );
 
-// ⏱️ Rate limit global (anti-flood)
+// -------------------- ⏱ Rate Limit --------------------
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -55,46 +55,42 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
+// -------------------- 🖼 Servir imágenes estáticas --------------------
+app.use("/images", express.static(path.join(__dirname, "../public/images")));
+
 // -------------------- 🔗 Rutas --------------------
-
-// -------------------- 🖼️ Archivos estáticos --------------------
-app.use("/images", express.static(path.join(__dirname, "public/images")));
-
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/products", productRoutes);
-app.use("/api/promotions", promotionRoutes); // 👈 NUEVA RUTA
+app.use("/api/promotions", promotionRoutes);
 
-// 🩺 Healthcheck para monitoreo
+// -------------------- 🩺 Healthcheck --------------------
 app.get("/health", (_, res) => res.status(200).json({ status: "ok", env: NODE_ENV }));
+
 app.get("/", (_, res) => {
   res.send(`
     🍕 API de Rapida&Sabrosa está en funcionamiento 🚀<br>
     Endpoints disponibles:<br>
     • /api/products<br>
     • /api/promotions/active<br>
-    • /api/docs
+    • /api/docs<br>
+    • /images/pizzas/p1-pizzas01.jpeg
   `);
 });
 
-// -------------------- ⚠️ Manejo de errores --------------------
+// -------------------- ⚠️ Errores --------------------
 app.use((req, res) => res.status(404).json({ error: "Ruta no encontrada" }));
 app.use((err, req, res, _next) => {
   console.error("⚠️ Error global capturado:", err);
-  res.status(err.status || 500).json({
-    error: err.message || "Error interno del servidor",
-  });
+  res.status(err.status || 500).json({ error: err.message || "Error interno del servidor" });
 });
 
-// -------------------- 🚀 Servidor --------------------
+// -------------------- 🚀 Start --------------------
 const server = app.listen(PORT, async () => {
   console.log(`🚀 Servidor (${NODE_ENV}) corriendo en puerto ${PORT}`);
-
-  // 🔄 Verificación automática al inicio
   await checkPromotionsExpiration();
 });
 
-
-// 🧹 Cierre limpio (Render apaga containers después de inactividad)
+// -------------------- 🧹 Cierre limpio --------------------
 const shutdown = async () => {
   console.log("🧹 Cerrando servidor y conexión a DB...");
   await prisma.$disconnect();
