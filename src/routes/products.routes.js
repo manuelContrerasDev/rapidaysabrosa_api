@@ -1,7 +1,9 @@
+// routes/products.routes.js
 import express from "express";
 import {
   getProducts,
   getProductById,
+  getProductsByCategory,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -16,20 +18,22 @@ import { strictLimiter } from "../middlewares/rateLimit.js";
 const router = express.Router();
 
 /**
- * Rutas de productos (base: /api/products)
- * Incluye validaciones, rate limit y estructura REST completa.
+ * 📦 Rutas base de productos (/api/products)
  */
 
-// 📦 Obtener lista de productos (con paginación, búsqueda, etc.)
+// ✅ Obtener TODOS los productos
 router.get("/", getProducts);
 
-// 🔍 Obtener un producto por ID
+// 🏷️ Obtener productos por categoría
+router.get("/category/:id", getProductsByCategory);
+
+// 🔍 Obtener producto por ID
 router.get("/:id", getProductById);
 
-// ➕ Crear producto (con validación y limitador)
+// ➕ Crear producto
 router.post("/", strictLimiter, validate(productCreateSchema), createProduct);
 
-// ♻️ Actualizar producto por ID (validación)
+// ♻️ Actualizar producto
 router.put("/:id", validate(productUpdateSchema), updateProduct);
 
 // 🗑️ Eliminar producto

@@ -1,3 +1,4 @@
+// controllers/products.controller.js
 import prisma from "../config/db.js";
 import {
   productCreateSchema,
@@ -5,40 +6,33 @@ import {
 } from "../validators/product.validator.js";
 
 /**
- * 🔍 Obtener lista de productos (con paginación, búsqueda y orden)
- * GET /api/products?page=1&limit=10&search=texto&order=asc
+ * =====================================================
+ * 🧾 Obtener TODOS los productos
+ * GET /api/products?search=&order=asc&vegetarian=true
+ * =====================================================
  */
 export const getProducts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
     const search = req.query.search || "";
     const order = req.query.order === "desc" ? "desc" : "asc";
+    const vegetarian = req.query.vegetarian === "true";
 
-    const skip = (page - 1) * limit;
+    // 🎯 Filtros opcionales
+    const whereClause = {
+      name: { contains: search, mode: "insensitive" },
+      ...(vegetarian ? { isVegetarian: true } : {}),
+    };
 
-    // Consulta con filtro, búsqueda y orden
-    const [total, products] = await Promise.all([
-      prisma.products.count({
-        where: {
-          name: { contains: search, mode: "insensitive" },
-        },
-      }),
-      prisma.products.findMany({
-        where: {
-          name: { contains: search, mode: "insensitive" },
-        },
-        orderBy: { name: order },
-        skip,
-        take: limit,
-      }),
-    ]);
+    // 🔍 Obtener todos los productos sin límite
+    const products = await prisma.products.findMany({
+      where: whereClause,
+      orderBy: { name: order },
+    });
 
     res.json({
       meta: {
-        total,
-        page,
-        pages: Math.ceil(total / limit),
+        total: products.length,
+        filters: { search, order, vegetarian },
       },
       data: products,
     });
@@ -49,20 +43,68 @@ export const getProducts = async (req, res) => {
 };
 
 /**
- * 🧾 Obtener producto por ID
+ * =====================================================
+ * 🏷️ Obtener productos por categoría
+ * GET /api/products/category/:id?search=&order=asc&vegetarian=true
+ * =====================================================
+ */
+export const getProductsByCategory = async (req, res) => {
+  try {
+    const categoryId = parseInt(req.params.id);
+    const search = req.query.search || "";
+    const order = req.query.order === "desc" ? "desc" : "asc";
+    const vegetarian = req.query.vegetarian === "true";
+
+    if (isNaN(categoryId)) {
+      return res.status(400).json({ error: "ID de categoría inválido" });
+    }
+
+    // 🎯 Filtros combinados
+    const whereClause = {
+      category_id: categoryId,
+      name: { contains: search, mode: "insensitive" },
+      ...(vegetarian ? { isVegetarian: true } : {}),
+    };
+
+    // 🔍 Buscar todos los productos de la categoría
+    const products = await prisma.products.findMany({
+      where: whereClause,
+      orderBy: { name: order },
+    });
+
+    if (products.length === 0) {
+      return res.status(404).json({
+        message: "No se encontraron productos en esta categoría con los filtros aplicados",
+      });
+    }
+
+    res.json({
+      meta: {
+        category_id: categoryId,
+        total: products.length,
+        filters: { search, order, vegetarian },
+      },
+      data: products,
+    });
+  } catch (error) {
+    console.error("❌ [getProductsByCategory] Error:", error);
+    res.status(500).json({ error: "Error al obtener productos por categoría" });
+  }
+};
+
+/**
+ * =====================================================
+ * 🔍 Obtener producto individual
  * GET /api/products/:id
+ * =====================================================
  */
 export const getProductById = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
-    }
+    if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
 
     const product = await prisma.products.findUnique({ where: { id } });
-    if (!product) {
-      return res.status(404).json({ error: "Producto no encontrado" });
-    }
+    if (!product) return res.status(404).json({ error: "Producto no encontrado" });
 
     res.json(product);
   } catch (error) {
@@ -72,8 +114,9 @@ export const getProductById = async (req, res) => {
 };
 
 /**
- * ➕ Crear un nuevo producto
- * POST /api/products
+ * =====================================================
+ * ➕ Crear producto
+ * =====================================================
  */
 export const createProduct = async (req, res) => {
   try {
@@ -87,6 +130,7 @@ export const createProduct = async (req, res) => {
         image_url: parsed.image_url || null,
         category_id: Number(parsed.category_id),
         available: parsed.available ?? true,
+        isVegetarian: parsed.isVegetarian ?? false,
       },
     });
 
@@ -107,26 +151,22 @@ export const createProduct = async (req, res) => {
 };
 
 /**
- * ♻️ Actualizar producto existente
- * PUT /api/products/:id
+ * =====================================================
+ * ♻️ Actualizar producto
+ * =====================================================
  */
 export const updateProduct = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
-    }
+    if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
 
     const parsed = productUpdateSchema.parse(req.body);
-
     const existing = await prisma.products.findUnique({ where: { id } });
-    if (!existing) {
-      return res.status(404).json({ error: "Producto no encontrado" });
-    }
+    if (!existing) return res.status(404).json({ error: "Producto no encontrado" });
 
     const updated = await prisma.products.update({
       where: { id },
-      data: { ...existing, ...parsed },
+      data: { ...parsed },
     });
 
     res.json({
@@ -146,20 +186,17 @@ export const updateProduct = async (req, res) => {
 };
 
 /**
+ * =====================================================
  * 🗑️ Eliminar producto
- * DELETE /api/products/:id
+ * =====================================================
  */
 export const deleteProduct = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID inválido" });
-    }
+    if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
 
     const existing = await prisma.products.findUnique({ where: { id } });
-    if (!existing) {
-      return res.status(404).json({ error: "Producto no encontrado" });
-    }
+    if (!existing) return res.status(404).json({ error: "Producto no encontrado" });
 
     await prisma.products.delete({ where: { id } });
 

@@ -44,6 +44,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301001/napolitana.jpg",
       category_id: cat["Pizzas con Charcutería"],
+      isVegetarian: false,
     },
     {
       name: "Pizza Española",
@@ -51,6 +52,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301002/espanola.jpg",
       category_id: cat["Pizzas con Charcutería"],
+      isVegetarian: false,
     },
     {
       name: "Pizza Cuatro Estaciones",
@@ -58,6 +60,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301003/cuatro-estaciones.jpg",
       category_id: cat["Pizzas con Charcutería"],
+      isVegetarian: false,
     },
 
     // --- PIZZAS CON POLLO ---
@@ -67,6 +70,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301004/pollo-bbq.jpg",
       category_id: cat["Pizzas con Pollo"],
+      isVegetarian: false,
     },
     {
       name: "Pizza Pollo Champiñón",
@@ -74,6 +78,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301005/pollo-champinon.jpg",
       category_id: cat["Pizzas con Pollo"],
+      isVegetarian: false,
     },
 
     // --- PIZZAS CON MECHADA ---
@@ -83,6 +88,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301006/mechada-italiana.jpg",
       category_id: cat["Pizzas con Mechada"],
+      isVegetarian: false,
     },
     {
       name: "Pizza Mechada BBQ",
@@ -90,6 +96,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301007/mechada-bbq.jpg",
       category_id: cat["Pizzas con Mechada"],
+      isVegetarian: false,
     },
 
     // --- PIZZAS CON FILETE ---
@@ -99,6 +106,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301008/filete-bbq.jpg",
       category_id: cat["Pizzas con Filete"],
+      isVegetarian: false,
     },
     {
       name: "Pizza Filete Chilena",
@@ -106,6 +114,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301009/filete-chilena.jpg",
       category_id: cat["Pizzas con Filete"],
+      isVegetarian: false,
     },
 
     // --- PIZZAS CON CAMARÓN ---
@@ -115,6 +124,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301010/camaron-queso.jpg",
       category_id: cat["Pizzas con Camarón"],
+      isVegetarian: false,
     },
     {
       name: "Pizza Camarón BBQ",
@@ -122,6 +132,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301011/camaron-bbq.jpg",
       category_id: cat["Pizzas con Camarón"],
+      isVegetarian: false,
     },
 
     // --- PIZZAS VEGETARIANAS ---
@@ -131,6 +142,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301012/sabrosa.jpg",
       category_id: cat["Pizzas Vegetarianas"],
+      isVegetarian: true,
     },
     {
       name: "Pizza Griega",
@@ -138,6 +150,7 @@ async function main() {
       price: 13000.0,
       image_url: "https://res.cloudinary.com/delycor/image/upload/v1729301013/griega.jpg",
       category_id: cat["Pizzas Vegetarianas"],
+      isVegetarian: true,
     },
 
     // --- HAMBURGUESAS ---
