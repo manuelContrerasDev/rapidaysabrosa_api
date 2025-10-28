@@ -72,12 +72,17 @@ app.use("/api", limiter);
 
 
 // -------------------- 🖼 Servir imágenes estáticas --------------------
-app.use("/images", express.static(path.join(__dirname, "public/images")));
-app.use("/images", (req, res, next) => {
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  next();
-});
+// -------------------- 🖼 Servir imágenes estáticas --------------------
+app.use(
+  "/images",
+  (req, res, next) => {
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    next();
+  },
+  express.static(path.join(__dirname, "../public/images"))
+);
+
 
 
 // -------------------- 🔗 Rutas --------------------
