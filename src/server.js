@@ -53,6 +53,12 @@ app.use(
   })
 );
 
+// -------------------- 🧩 Permitir recursos cross-origin (para imágenes) --------------------
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
+  next();
+});
 
 // -------------------- ⏱ Rate Limit --------------------
 const limiter = rateLimit({
@@ -64,8 +70,15 @@ const limiter = rateLimit({
 });
 app.use("/api", limiter);
 
+
 // -------------------- 🖼 Servir imágenes estáticas --------------------
-app.use("/images", express.static(path.join(__dirname, "../public/images")));
+app.use("/images", express.static(path.join(__dirname, "public/images")));
+app.use("/images", (req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  next();
+});
+
 
 // -------------------- 🔗 Rutas --------------------
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
