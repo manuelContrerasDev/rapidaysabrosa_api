@@ -17,21 +17,22 @@ import { fileURLToPath } from "url";
 dotenv.config();
 const app = express();
 
+// -------------------- 🧱 Config base --------------------
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// Resolver dirname
+// Resolver __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Seguridad
+// -------------------- 🛡 Seguridad --------------------
 app.set("trust proxy", 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(xss());
 app.use(express.json({ limit: "10kb" }));
 app.use(morgan(NODE_ENV === "production" ? "combined" : "dev"));
 
-// CORS
+// -------------------- 🌐 CORS --------------------
 const allowedOrigins = [
   "http://localhost:5173",
   "https://rapidaysabrosa-ecommerce-tlru.vercel.app",
@@ -51,7 +52,7 @@ app.use(
   })
 );
 
-// ✅ Imágenes con headers correctos
+// -------------------- 🖼 Servir imágenes estáticas --------------------
 app.use(
   "/images",
   (req, res, next) => {
@@ -60,15 +61,15 @@ app.use(
     res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
     next();
   },
-  express.static(path.join(__dirname, "../public/images"))
+  express.static(path.join(__dirname, "/public/images"))
 );
 
-// Rutas API
+// -------------------- 🔗 Rutas --------------------
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/products", productRoutes);
 app.use("/api/promotions", promotionRoutes);
 
-// Healthcheck
+// -------------------- 🩺 Healthcheck --------------------
 app.get("/health", (_, res) =>
   res.status(200).json({ status: "ok", env: NODE_ENV })
 );
@@ -84,20 +85,21 @@ app.get("/", (_, res) => {
   `);
 });
 
-// Errores
+// -------------------- ⚠️ Errores --------------------
 app.use((req, res) => res.status(404).json({ error: "Ruta no encontrada" }));
 app.use((err, req, res, _next) => {
   console.error("⚠️ Error global:", err);
   res.status(err.status || 500).json({ error: err.message || "Error interno" });
 });
 
-// Start
+// -------------------- 🚀 Start --------------------
 const server = app.listen(PORT, async () => {
-  console.log(`🚀 Servidor (${NODE_ENV}) en puerto ${PORT}`);
+  console.log(`🚀 Servidor (${NODE_ENV}) escuchando en puerto ${PORT}`);
+  console.log("🧩 Carpeta de imágenes:", path.join(__dirname, "../public/images"));
   await checkPromotionsExpiration();
 });
 
-// Cierre limpio
+// -------------------- 🧹 Cierre limpio --------------------
 const shutdown = async () => {
   console.log("🧹 Cerrando servidor y DB...");
   await prisma.$disconnect();
