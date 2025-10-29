@@ -61,7 +61,7 @@ app.use(
     res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
     next();
   },
-  express.static(path.join(__dirname, "/public/images"))
+  express.static(path.join(__dirname, "/..public/images"))
 );
 
 // -------------------- 🔗 Rutas --------------------
