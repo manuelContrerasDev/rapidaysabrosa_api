@@ -17,86 +17,66 @@ import { fileURLToPath } from "url";
 dotenv.config();
 const app = express();
 
-// -------------------- 🧱 Config base --------------------
 const PORT = process.env.PORT || 4000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 
-// 🔧 Resolver __dirname en ESModules
+// Resolver dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// -------------------- 🛡 Seguridad --------------------
+// Seguridad
 app.set("trust proxy", 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(xss());
 app.use(express.json({ limit: "10kb" }));
 app.use(morgan(NODE_ENV === "production" ? "combined" : "dev"));
 
-// -------------------- 🌐 CORS --------------------
+// CORS
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://rapidaysabrosa-ecommerce-tlru.vercel.app", // 👈 tu dominio de producción
-  "https://rapidaysabrosa-api.onrender.com",           // por si el backend se llama a sí mismo
+  "https://rapidaysabrosa-ecommerce-tlru.vercel.app",
+  "https://rapidaysabrosa-api.onrender.com",
 ];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
+      if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+      else {
         console.warn(`❌ Bloqueado por CORS: ${origin}`);
-        callback(new Error("CORS no permitido por el servidor"), false);
+        callback(new Error("CORS no permitido"), false);
       }
     },
     credentials: true,
   })
 );
 
-// -------------------- 🧩 Permitir recursos cross-origin (para imágenes) --------------------
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
-  res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
-  next();
-});
-
-// -------------------- ⏱ Rate Limit --------------------
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: "Demasiadas peticiones desde esta IP. Intenta más tarde." },
-});
-app.use("/api", limiter);
-
-
-// -------------------- 🖼 Servir imágenes estáticas --------------------
-// -------------------- 🖼 Servir imágenes estáticas --------------------
+// ✅ Imágenes con headers correctos
 app.use(
   "/images",
   (req, res, next) => {
-    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+    res.setHeader("Cross-Origin-Embedder-Policy", "credentialless");
     next();
   },
   express.static(path.join(__dirname, "../public/images"))
 );
 
-
-
-// -------------------- 🔗 Rutas --------------------
+// Rutas API
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/products", productRoutes);
 app.use("/api/promotions", promotionRoutes);
 
-// -------------------- 🩺 Healthcheck --------------------
-app.get("/health", (_, res) => res.status(200).json({ status: "ok", env: NODE_ENV }));
+// Healthcheck
+app.get("/health", (_, res) =>
+  res.status(200).json({ status: "ok", env: NODE_ENV })
+);
 
 app.get("/", (_, res) => {
   res.send(`
-    🍕 API de Rapida&Sabrosa está en funcionamiento 🚀<br>
-    Endpoints disponibles:<br>
+    🍕 API de Rapida&Sabrosa funcionando 🚀<br>
+    Endpoints:<br>
     • /api/products<br>
     • /api/promotions/active<br>
     • /api/docs<br>
@@ -104,27 +84,24 @@ app.get("/", (_, res) => {
   `);
 });
 
-// -------------------- ⚠️ Errores --------------------
+// Errores
 app.use((req, res) => res.status(404).json({ error: "Ruta no encontrada" }));
 app.use((err, req, res, _next) => {
-  console.error("⚠️ Error global capturado:", err);
-  res.status(err.status || 500).json({ error: err.message || "Error interno del servidor" });
+  console.error("⚠️ Error global:", err);
+  res.status(err.status || 500).json({ error: err.message || "Error interno" });
 });
 
-// -------------------- 🚀 Start --------------------
+// Start
 const server = app.listen(PORT, async () => {
-  console.log(`🚀 Servidor (${NODE_ENV}) corriendo en puerto ${PORT}`);
+  console.log(`🚀 Servidor (${NODE_ENV}) en puerto ${PORT}`);
   await checkPromotionsExpiration();
 });
 
-// -------------------- 🧹 Cierre limpio --------------------
+// Cierre limpio
 const shutdown = async () => {
-  console.log("🧹 Cerrando servidor y conexión a DB...");
+  console.log("🧹 Cerrando servidor y DB...");
   await prisma.$disconnect();
-  server.close(() => {
-    console.log("✅ Servidor detenido correctamente");
-    process.exit(0);
-  });
+  server.close(() => process.exit(0));
 };
 
 process.on("SIGINT", shutdown);
